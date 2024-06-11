@@ -3,8 +3,10 @@ from value_function import GridValueFunction
 import utils
 import tqdm
 from dataclasses import dataclass
-from discretization import adaptive_grid_theta, adaptive_grid_xy, adaptive_control_grid_v, adaptive_control_grid_w
+from discretization import create_state_space
 from joblib import Parallel, delayed
+import os
+import argparse
 
 class GPI:
     def __init__(self, config, nt, batch_size=10):
@@ -224,18 +226,11 @@ if __name__ == "__main__":
     nt = 100  # Replace with the actual number of time steps
 
     traj = utils.lissajous
-    ex_space = adaptive_grid_xy()    
-    ey_space = adaptive_grid_xy()
-    eth_space = adaptive_grid_theta()
-    v_space = adaptive_control_grid_v()
-    w_space = adaptive_control_grid_w()
-    # ex_space = np.linspace(-2, 2, 3)
-    # ey_space = np.linspace(-2, 2, 3)
-    # eth_space = np.linspace(-np.pi, np.pi, 3)
-    # v_space = np.linspace(0, 1, 3)
-    # w_space = np.linspace(-1, 1, 3)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--exp', type=str, default='GPI_pp4_1')
+    exp = parser.parse_args().exp
 
-    exp_name = 'GPI_pp4_2'
+    ex_space, ey_space, eth_space, v_space, w_space = create_state_space()
 
     obstacles = np.array([[1.0, 2.0], [-2.0, -2.0]])
     Q = np.eye(2)  # State cost matrix
@@ -244,7 +239,7 @@ if __name__ == "__main__":
     gamma = 0.90  # Discount factor
     num_evals = 100  # Number of policy evaluations in each iteration
     collision_margin = 0.55  # Collision margin
-    output_dir = f'./output/{exp_name}'  # Output directory for saving results
+    output_dir = f'./output/{exp}'  # Output directory for saving results
 
     config = GpiConfig(
         traj=traj,
@@ -272,7 +267,7 @@ if __name__ == "__main__":
         v_batch_size=None
     )
 
-    data_folder = './data/'
+    data_folder = f'./data/{exp}/'
     gpi = GPI(config, nt, batch_size=100)  # Adjust the batch size as needed
     gpi.load_transition_matrix(f'{data_folder}combined_transition_matrix_float16.npz')
     gpi.load_stage_costs(f'{data_folder}combined_stage_cost_matrix.npz')
