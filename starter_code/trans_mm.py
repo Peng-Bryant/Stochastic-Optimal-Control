@@ -32,6 +32,19 @@ def find_6_neighbor_indices(mean_state, ex_space, ey_space, eth_space):
     
     return list(zip(i_indices[:4], j_indices[:4], k_indices[:4])) + list(zip([i]*2, [j]*2, k_indices[4:]))
 
+def find_7_neighbor_indices(mean_state, ex_space, ey_space, eth_space):
+    i = np.digitize(mean_state[0], ex_space) - 1
+    j = np.digitize(mean_state[1], ey_space) - 1
+    k = np.digitize(mean_state[2], eth_space) - 1
+    
+    # Pre-compute indices
+    i_indices = [np.clip(i+1, 0, len(ex_space)-1), np.clip(i-1, 0, len(ex_space)-1), i, i]
+    j_indices = [j, j, np.clip(j+1, 0, len(ey_space)-1), np.clip(j-1, 0, len(ey_space)-1)]
+    k_indices = [k, k, k, k]
+    k_indices += [np.clip(k+1, 0, len(eth_space)-1), np.clip(k-1, 0, len(eth_space)-1)]
+    
+    return list(zip(i_indices[:4], j_indices[:4], k_indices[:4])) + list(zip([i]*2, [j]*2, k_indices[4:]))+ list([i, j, k])
+
 def compute_transition_matrix_for_state_control(tasks, delta_t, sigma, ex_space, ey_space, eth_space, v_space, w_space):
     results = []
     for task in tasks:
@@ -46,7 +59,7 @@ def compute_transition_matrix_for_state_control(tasks, delta_t, sigma, ex_space,
         e = np.array([ex, ey, eth])
         u = np.array([v, w])
         mean_next_e = mean_next_state(e, u, t, delta_t)
-        neighbors = find_6_neighbor_indices(mean_next_e, ex_space, ey_space, eth_space)
+        neighbors = find_7_neighbor_indices(mean_next_e, ex_space, ey_space, eth_space)
         
         sigma_inv_squared = (1 / sigma) ** 2
         diag_sigma_inv_squared = np.diag(sigma_inv_squared)
@@ -103,9 +116,9 @@ def compute_transition_matrix(chunk_idx, transition_matrix, ex_space, ey_space, 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--exp', type=str, default='GPI_pp4_1')
-    exp = parser.parse_args().exp
-    Folder = f"./data/{exp}/"
+    parser.add_argument('--data', type=str, default='GPI_pp4_1')
+    data = parser.parse_args().data
+    Folder = f"./data/{data}/"
 
     if not os.path.exists(Folder):
         os.makedirs(Folder)
@@ -123,7 +136,7 @@ if __name__ == "__main__":
     # Initialize transition matrix with smaller chunk
     chunk_size = 5  # Adjust this value as needed
     chunk_transition_matrix = np.zeros((chunk_size, len(ex_space), len(ey_space), len(eth_space), 
-                                        len(v_space), len(w_space), 6, 4), dtype=np.float16)
+                                        len(v_space), len(w_space), 7, 4), dtype=np.float16)
 
     print("transition_matrix shape:", chunk_transition_matrix.shape)
     # Precompute the lissajous curve

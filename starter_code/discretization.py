@@ -30,7 +30,7 @@ def adaptive_grid_xy():
     
     return grid
 
-def adaptive_grid_theta():
+def adaptive_grid_theta_0():
     """
     Generate an adaptive grid based on the error state and error threshold.
     3 level grids for theta
@@ -60,7 +60,37 @@ def adaptive_grid_theta():
     
     return grid
 
-def adaptive_control_grid_w():
+def adaptive_grid_theta_1():
+    """
+    Generate an adaptive grid based on the error state and error threshold.
+    3 level grids for theta
+    Whole state space is [-pi, pi]
+
+    for [-pi/4, pi/4] divided into 10 parts
+    for [-pi/2, pi/2] divided into 5 parts
+    for [-pi, pi] divided into 5 parts
+    """
+    # Fine grid for [-pi/4, pi/4] divided into 10 parts
+    fine_grid = np.linspace(-np.pi/4, np.pi/4, 14)
+    
+    # Medium grid for [-pi/2, pi/2] divided into 5 parts excluding the overlap with fine grid
+    medium_grid = np.concatenate([
+        np.linspace(-np.pi/2, -np.pi/4, 5),
+        np.linspace(np.pi/4, np.pi/2, 5)
+    ])
+    
+    # Coarse grid for [-pi, pi] divided into 5 parts excluding the overlap with medium and fine grid
+    coarse_grid = np.concatenate([
+        np.linspace(-np.pi, -np.pi/2, 10),
+        np.linspace(np.pi/2, np.pi, 10)
+    ])
+    
+    # Combine all grids
+    grid = np.sort(np.unique(np.concatenate([fine_grid, medium_grid, coarse_grid])))
+    
+    return grid
+
+def adaptive_control_grid_w_0():
     """
     Generate an adaptive control grid based on the error state.
     3 level grids for theta
@@ -90,6 +120,9 @@ def adaptive_control_grid_w():
     
     return grid
 
+def adaptive_control_grid_w_1():
+    return np.linspace(-1, 1, 10)
+
 def adaptive_control_grid_v():
     """
     Generate an adaptive control grid based on the error state.
@@ -118,55 +151,74 @@ def adaptive_control_grid_v():
     
     return grid
 
-
-
-def adaptive_control_grid(error_state, error_threshold, fine_spacing, coarse_spacing):
-    """
-    Generate an adaptive control grid based on the current error state.
+def adaptive_grid_theta_2():
+    """the finest-level resolution is the evenly distance
+      from −π/4 to π/4 divided into 5 parts; the middle-level 
+      is descretized to ±π/2; and the coarsest-level, ±π"""
+    # Fine grid for [-pi/4, pi/4] divided into 5 parts
+    fine_grid = np.linspace(-np.pi/4, np.pi/4, 6)
     
-    Args:
-    - error_state (float): The current error state.
-    - error_threshold (float): The threshold for switching between fine and coarse grids.
-    - fine_spacing (float): The spacing for fine grid.
-    - coarse_spacing (float): The spacing for coarse grid.
+    # Medium grid for [-pi/2, pi/2] divided into 5 parts excluding the overlap with fine grid
+    medium_grid = np.concatenate([
+        np.linspace(-np.pi/2, -np.pi/4, 3),
+        np.linspace(np.pi/4, np.pi/2, 3)
+    ])
     
-    Returns:
-    - control_grid (np.ndarray): The adaptive control grid.
-    """
-    if abs(error_state) <= error_threshold:
-        # Use fine control grid
-        control_grid = np.arange(0, 1 + fine_spacing, fine_spacing)  # Example for v, adjust as needed
-    else:
-        # Use coarse control grid
-        control_grid = np.arange(0, 1 + coarse_spacing, coarse_spacing)  # Example for v, adjust as needed
-    return control_grid
-
-def dynamic_R(self, error_state, obstacle_positions):
-    """
-    Adjust the R matrix based on the error state and proximity to obstacles.
-    """
-    base_R = np.diag([0.1, 0.1])  # Example base R matrix, adjust as needed
-    increase_factor = 10  # Factor by which to increase R, adjust as needed
-    min_distance_to_obstacle = np.min([np.linalg.norm(error_state[:2] - obs[:2]) for obs in obstacle_positions])
+    # Coarse grid for [-pi, pi] divided into 5 parts excluding the overlap with medium and fine grid
+    coarse_grid = np.concatenate([
+        np.linspace(-np.pi, -np.pi/2, 4),
+        np.linspace(np.pi/2, np.pi, 4)
+    ])
     
-    if np.linalg.norm(error_state) <= 0.5 or min_distance_to_obstacle <= 0.5:
-        return base_R * increase_factor
-    else:
-        return base_R
+    # Combine all grids
+    grid = np.sort(np.unique(np.concatenate([fine_grid, medium_grid, coarse_grid])))
     
-def create_state_space():
+    return grid
+    
+def create_state_space_():
     """
     Create the state space for the system.
     """
-    # Define the state space
+    # Define the state space_0
     ex_space = adaptive_grid_xy()
     ey_space = adaptive_grid_xy()
-    eth_space = adaptive_grid_theta()
+    eth_space = adaptive_grid_theta_0()
     v_space = adaptive_control_grid_v()
-    w_space = adaptive_control_grid_w()
+    w_space = adaptive_control_grid_w_0()
  
     print("State space created! Shape of state space is: ", ex_space.shape, ey_space.shape, eth_space.shape, v_space.shape, w_space.shape)
     return ex_space, ey_space, eth_space, v_space, w_space
+
+
+def create_state_space_():
+    """
+    Create the state space 1 for the system.
+    """
+    # Define the state space_1
+    ex_space = adaptive_grid_xy()
+    ey_space = adaptive_grid_xy()
+    eth_space = adaptive_grid_theta_1()
+    v_space = adaptive_control_grid_v()
+    w_space = adaptive_control_grid_w_1()
+ 
+    print("State space 1 created! Shape of state space is: ", ex_space.shape, ey_space.shape, eth_space.shape, v_space.shape, w_space.shape)
+    return ex_space, ey_space, eth_space, v_space, w_space
+
+
+def create_state_space():
+    """
+    Create the state space 2 for the system.
+    """
+    ex_space = adaptive_grid_xy()
+    ey_space = adaptive_grid_xy()
+    eth_space = adaptive_grid_theta_2()
+    v_space =  np.linspace(0, 1, 11)
+    w_space = np.linspace(-1, 1, 11)
+
+    print("State space 2 created! Shape of state space is: ", ex_space.shape, ey_space.shape, eth_space.shape, v_space.shape, w_space.shape)
+    return ex_space, ey_space, eth_space, v_space, w_space
+
+
 
 
 if __name__ == "__main__":

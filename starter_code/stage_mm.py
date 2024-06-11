@@ -86,9 +86,9 @@ if __name__ == "__main__":
     # Example grid definitions
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--exp', type=str, default='GPI_pp4_1')
-    exp = parser.parse_args().exp
-    Folder = f"./data/{exp}/"
+    parser.add_argument('--data', type=str, default='GPI_pp4_1')
+    data = parser.parse_args().data
+    Folder = f"./data/{data}/"
 
     if not os.path.exists(Folder):
         os.makedirs(Folder)
@@ -113,12 +113,12 @@ if __name__ == "__main__":
     lissajous_curve = np.array([utils.lissajous(t) for t in range(101)])
 
     # Example usage
-    Q = np.eye(2)  # Example value for Q
-    q = 1.0  # Example value for q
+    Q = np.eye(2)*2  # Example value for Q
+    q = 2.0  # Example value for q
     R = np.eye(2)  # Example value for R
     k_col = 1000.0  # Example value for collision cost
-    collision_margin = 0.5 + 0.05  # Example value for collision margin
-    obstacles = np.array([[1.0, 1.0], [-1.0, -1.0]])  # Example obstacles
+    collision_margin = 0.5 + 0.01  # Example value for collision margin
+    obstacles = np.array([[-2, -2.0], [1, 2.0]])  
     delta_t = 0.5
 
     for chunk_idx in range(nt // chunk_size):
