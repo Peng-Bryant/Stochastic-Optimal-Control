@@ -76,12 +76,7 @@ class GridValueFunction(ValueFunction):
         new_vf.copy_from(self)
         return new_vf
 
-# class FeatureValueFunction(ValueFunction):
-#     """
-#     Feature-based value function
-#     """
-#     # TODO: your implementation
-#     raise NotImplementedError
+
 
 
 

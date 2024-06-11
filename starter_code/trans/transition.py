@@ -4,7 +4,6 @@ import tqdm
 import utils
 import time
 
-# Example grid definitions
 error_threshold = 0.5
 fine_spacing = 0.1
 coarse_spacing = 0.6
@@ -22,9 +21,12 @@ w_space = np.linspace(-1, 1, 10)
 transition_matrix = np.zeros((nt, len(ex_space), len(ey_space), len(eth_space), 
                               len(v_space), len(w_space), 6, 4), dtype=np.float32)
 
+#precompute the lissajous curve
+lissajous_curve = np.array([utils.lissajous(t) for t in range(100)])
+
 def mean_next_state(e, u, t, delta_t):
-    r_x_curr, r_y_curr, r_theta_curr = utils.lissajous(t)
-    r_x_next, r_y_next, r_theta_next = utils.lissajous(t + 1)
+    r_x_curr, r_y_curr, r_theta_curr = lissajous_curve[t]
+    r_x_next, r_y_next, r_theta_next = lissajous_curve[t + 1]
 
     G_e = np.array([[delta_t * np.cos(e[2] + r_theta_curr), 0],
                     [delta_t * np.sin(e[2] + r_theta_curr), 0],
@@ -90,13 +92,12 @@ def compute_transition_matrix(transition_matrix, ex_space, ey_space, eth_space, 
                     for iv in range(len(v_space)):
                         for iw in range(len(w_space)):
                             total_prob = np.sum(transition_matrix[t, ix, iy, it, iv, iw, :, 3])
-                            print(total_prob)
+                            # print(total_prob)
                             if total_prob > 0:
                                 transition_matrix[t, ix, iy, it, iv, iw, :, 3] /= total_prob
     end_time = time.time()
     print(f"Time taken for normalization: {end_time - start_time:.2f} seconds")
 
-# Example usage
 sigma = np.array([0.04, 0.04, 0.004])
 delta_t = 0.5
 compute_transition_matrix(transition_matrix, ex_space, ey_space, eth_space, v_space, w_space, delta_t, sigma)

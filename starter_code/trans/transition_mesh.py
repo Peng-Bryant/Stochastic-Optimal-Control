@@ -4,7 +4,6 @@ import tqdm
 import utils
 import time
 from scipy.special import logsumexp
-from discretization import adaptive_grid_theta, adaptive_grid_xy, adaptive_control_grid_v, adaptive_control_grid_w  
 
 # Example grid definitions
 error_threshold = 0.5
@@ -12,17 +11,16 @@ fine_spacing = 0.1
 coarse_spacing = 0.6
 
 nt = 1
-ex_space = adaptive_grid_xy()    
-ey_space = adaptive_grid_xy()
-eth_space = adaptive_grid_theta()
-v_space = adaptive_control_grid_v()
-w_space = adaptive_control_grid_w()
+ex_space = np.linspace(-3, 3, 20)
+ey_space = np.linspace(-3, 3, 20)
+eth_space = np.linspace(-np.pi, np.pi, 20)
+v_space = np.linspace(0, 1, 10)
+w_space = np.linspace(-1, 1, 10)
 
 # Initialize transition matrix
 transition_matrix = np.zeros((nt, len(ex_space), len(ey_space), len(eth_space), 
                               len(v_space), len(w_space), 6, 4), dtype=np.float32)
 
-print("transition_matrix shape:", transition_matrix.shape)
 # Precompute the lissajous curve
 lissajous_curve = np.array([utils.lissajous(t) for t in range(100)])
 
@@ -83,14 +81,8 @@ def compute_transition_matrix_for_state_control(tasks, delta_t, sigma, ex_space,
     return results
 
 def compute_transition_matrix(transition_matrix, ex_space, ey_space, eth_space, v_space, w_space, delta_t, sigma, batch_size=100):
-    tasks = []
-    for t in range(nt):
-        for ix in range(len(ex_space)):
-            for iy in range(len(ey_space)):
-                for it in range(len(eth_space)):
-                    for iv in range(len(v_space)):
-                        for iw in range(len(w_space)):
-                            tasks.append((t, ix, iy, it, iv, iw))
+    tasks = np.meshgrid(range(nt), range(len(ex_space)), range(len(ey_space)), range(len(eth_space)), range(len(v_space)), range(len(w_space)), indexing='ij')
+    tasks = np.stack(tasks, axis=-1).reshape(-1, 6)
     
     # Create batches of tasks
     task_batches = [tasks[i:i + batch_size] for i in range(0, len(tasks), batch_size)]
@@ -109,10 +101,7 @@ def compute_transition_matrix(transition_matrix, ex_space, ey_space, eth_space, 
     end_time = time.time()
     print(f"Time taken for combining results: {end_time - start_time:.2f} seconds")
 
-    # Save the transition matrix to a npz file
-    np.savez('transition_matrix.npz', transition_matrix=transition_matrix)
-
 # Example usage
 sigma = np.array([0.04, 0.04, 0.004])
 delta_t = 0.5
-compute_transition_matrix(transition_matrix, ex_space, ey_space, eth_space, v_space, w_space, delta_t, sigma, batch_size=2100)
+compute_transition_matrix(transition_matrix, ex_space, ey_space, eth_space, v_space, w_space, delta_t, sigma, batch_size=8500)
